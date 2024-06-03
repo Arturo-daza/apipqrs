@@ -13,6 +13,11 @@ router.post("/signup", async (req, res) => {
     return res.status(400).json({ error: "Todos los campos son obligatorios" });
   }
 
+  const existingUser = await userSchema.findOne({ correo: correo });
+  if (existingUser) {
+    return res.status(400).json({ error: "El correo ya está registrado" });
+  }
+
   // Validar el tipo de usuario
   const tiposValidos = ["gestor", "usuario"];
   if (!tiposValidos.includes(tipo_de_usuario)) {
@@ -26,6 +31,8 @@ router.post("/signup", async (req, res) => {
     clave: clave,
     tipo_de_usuario: tipo_de_usuario,
   });
+
+  user.clave = await user.encryptClave(user.clave);
 
   // Guardar el usuario en la base de datos
   await user.save(); // save es un método de mongoose para guardar datos en MongoDB
@@ -56,25 +63,52 @@ router.post("/login", async (req, res) => {
 
   // Validar si no se encuentra el usuario
   if (!user) {
-    return res.status(400).json({ error: "Usuario o clave incorrectos" });
+    return res
+      .status(400)
+      .json({ error: "Usuario no existe en la base de datos" });
   }
 
   // Comparar la clave ingresada con la clave almacenada en la base de datos
-  const validPassword = await bcrypt.compare(clave, user.clave);
+  const validPassword = await bcrypt.compare(req.body.clave, user.clave);
+  let accessToken = null;
   if (!validPassword) {
-    return res.status(400).json({ error: "Usuario o clave incorrectos" });
+    return res.status(400).json({ error: "Clave incorrecta" });
+  } else {
+    const expiresIn = 24 * 60 * 60;
+    accessToken = jwt.sign({ id: user.id }, process.env.SECRET, {
+      expiresIn: expiresIn,
+    });
+
+    res.json({ accessToken });
   }
+});
 
-  // Generar un token JWT
-  const expiresIn = 24 * 60 * 60;
-  const accessToken = jwt.sign(
-    { id: user.id }, 
-    process.env.SECRET, {
-      expiresIn: expiresIn
+// Endpoint para obtener todos los usuarios
+router.get("/users", async (req, res) => {
+  try {
+    const users = await userSchema.find(); // Excluir el campo 'clave' de los resultados
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener los usuarios" });
+  }
+});
+
+// Endpoint para eliminar un usuario por su ID
+router.delete("/users/:id", async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    // Buscar y eliminar el usuario por su ID
+    const deletedUser = await userSchema.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
     }
-  );
 
-  res.json({ accessToken });
+    res.json({ message: "Usuario eliminado correctamente" });
+  } catch (error) {
+    res.status(500).json({ error: "Error al eliminar el usuario" });
+  }
 });
 
 module.exports = router;
