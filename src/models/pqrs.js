@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const pqrSchema = mongoose.Schema({
+const pqrsSchema = mongoose.Schema({
   fecha: {
     type: Date,
     default: Date.now,
@@ -20,13 +20,18 @@ const pqrSchema = mongoose.Schema({
   },
   estado: {
     type: String,
-    enum: ["Creado", "Resultado"],
+    enum: ["Creado", "En Atención", "Resuelto"],
     default: "Creado",
   },
   justificacion: {
     type: String,
     default: null,
   },
+  usuario: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "user",
+    required: true,
+  },
 });
 
-module.exports = mongoose.model("PQR", pqrSchema);
+module.exports = mongoose.model("PQRS", pqrsSchema);

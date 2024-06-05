@@ -9,7 +9,7 @@ router.post("/signup", async (req, res) => {
   const { usuario, correo, clave, tipo_de_usuario } = req.body;
 
   // Validar que se reciban todos los campos requeridos
-  if (!usuario || !correo || !clave || !tipo_de_usuario) {
+  if (!usuario || !correo || !clave) {
     return res.status(400).json({ error: "Todos los campos son obligatorios" });
   }
 
@@ -20,7 +20,7 @@ router.post("/signup", async (req, res) => {
 
   // Validar el tipo de usuario
   const tiposValidos = ["gestor", "usuario"];
-  if (!tiposValidos.includes(tipo_de_usuario)) {
+  if (tipo_de_usuario & !tiposValidos.includes(tipo_de_usuario)) {
     return res.status(400).json({ error: "Tipo de usuario no válido" });
   }
 
@@ -79,7 +79,7 @@ router.post("/login", async (req, res) => {
       expiresIn: expiresIn,
     });
 
-    res.json({ accessToken });
+    res.json({ datosUsuario: {accessToken: accessToken,  usuario: user.usuario, tipo_de_usuario:user.tipo_de_usuario} });
   }
 });
 

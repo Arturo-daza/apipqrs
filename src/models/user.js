@@ -18,8 +18,8 @@ const userSchema = mongoose.Schema({
   },
   tipo_de_usuario: {
     type: String,
-    enum: ["gestor", "usuario"], // Define los posibles valores
-    required: true,
+    enum: ["gestor", "usuario"], 
+    default: "usuario"
   },
 });
 
