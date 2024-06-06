@@ -42,17 +42,17 @@ router.post("/pqrs", verifyToken, async (req, res) => {
 
 // Ruta GET para obtener todas las PQRS creadas
 router.get("/pqrs", verifyToken, async (req, res) => {
-  console.log("si esta solicitando")
+  console.log("si esta solicitando");
   try {
     const usuario = await User.findById(req.user.id);
     if (usuario.tipo_de_usuario === "gestor") {
       // Si el usuario es tipo "gestor", obtener todas las PQRS sin restricciones
       const pqrs = await pqrsSchema.find();
-      res.json( pqrs );
+      res.json(pqrs);
     } else {
       // Buscar todas las PQRS creadas por el usuario
       const pqrs = await pqrsSchema.find({ usuario: req.user.id });
-      res.json( pqrs );
+      res.json(pqrs);
     }
   } catch (error) {
     // Manejar errores
@@ -114,7 +114,9 @@ router.put("/pqrs/:id", verifyToken, async (req, res) => {
     } else {
       // Si no es de tipo "gestor", verificar si la PQRS pertenece al usuario
       if (pqrs.usuario.toString() !== req.user.id) {
-        return res.status(403).json({ error: "No tienes permiso para actualizar esta PQRS" });
+        return res
+          .status(403)
+          .json({ error: "No tienes permiso para actualizar esta PQRS" });
       }
 
       // Actualizar la PQRS con los datos proporcionados en la solicitud
@@ -136,28 +138,15 @@ router.put("/pqrs/:id", verifyToken, async (req, res) => {
 });
 // Ruta DELETE para eliminar una PQRS creada por el usuario
 router.delete("/pqrs/:id", verifyToken, async (req, res) => {
-  try {
-    // Verificar si la PQRS con el ID especificado existe y pertenece al usuario
-    const pqrs = await pqrsSchema.findOne({
-      _id: req.params.id,
-      usuario: req.user.id,
+  const { id } = req.params;
+  pqrsSchema
+    .findByIdAndDelete({ _id: id })
+    .then((data) => {
+      res.json(data);
+    })
+    .catch((error) => {
+      res.json({ message: error });
     });
-    if (!pqrs) {
-      return res
-        .status(404)
-        .json({ error: "PQRS no encontrada o no autorizada" });
-    }
-
-    // Eliminar la PQRS de la base de datos
-    await pqrs.remove();
-
-    // Responder con un mensaje de éxito
-    res.json({ message: "PQRS eliminada correctamente" });
-  } catch (error) {
-    // Manejar errores
-    console.error("Error al eliminar la PQRS:", error);
-    res.status(500).json({ error: "Error interno del servidor" });
-  }
 });
 
 module.exports = router;

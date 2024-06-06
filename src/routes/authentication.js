@@ -78,8 +78,7 @@ router.post("/login", async (req, res) => {
     accessToken = jwt.sign({ id: user.id }, process.env.SECRET, {
       expiresIn: expiresIn,
     });
-
-    res.json({ datosUsuario: {accessToken: accessToken,  usuario: user.usuario, tipo_de_usuario:user.tipo_de_usuario} });
+    res.json({ datosUsuario: {accessToken: accessToken,  usuario: user.usuario, tipo_de_usuario:user.tipo_de_usuario, id: user.id} });
   }
 });
 
